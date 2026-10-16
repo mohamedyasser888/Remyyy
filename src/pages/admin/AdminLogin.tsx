@@ -21,7 +21,7 @@ export function AdminLogin() {
     setError('');
     setLoading(true);
 
-    const ok = await login(username, password);
+    const ok = login(username, password);
     setLoading(false);
 
     if (ok) {

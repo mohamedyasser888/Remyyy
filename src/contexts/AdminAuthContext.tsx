@@ -1,43 +1,39 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { supabase } from '@/services/supabase';
+/**
+ * Admin Auth Context
+ * Simple client-side admin authentication.
+ */
 
-const ADMIN_EMAIL = 'remyadmin@remy.app';
+import { createContext, useContext, useState, type ReactNode } from 'react';
+
+const ADMIN_USERNAME = 'remyadmin';
+const ADMIN_PASSWORD = 'remyadmin';
+const STORAGE_KEY = 'remy_admin_session';
 
 interface AdminAuthContextValue {
   isAdmin: boolean;
-  login: (username: string, password: string) => Promise<boolean>;
-  logout: () => Promise<void>;
+  login: (username: string, password: string) => boolean;
+  logout: () => void;
 }
 
 const AdminAuthContext = createContext<AdminAuthContextValue | null>(null);
 
 export function AdminAuthProvider({ children }: { children: ReactNode }) {
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
+    return sessionStorage.getItem(STORAGE_KEY) === 'true';
+  });
 
-  useEffect(() => {
-    const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      setIsAdmin(data.session?.user.email?.toLowerCase() === ADMIN_EMAIL);
-    };
-    checkSession();
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAdmin(session?.user.email?.toLowerCase() === ADMIN_EMAIL);
-    });
-    return () => listener.subscription.unsubscribe();
-  }, []);
-
-  const login = async (username: string, password: string): Promise<boolean> => {
-    const entered = username.trim().toLowerCase();
-    const email = entered.includes('@') ? entered : `${entered}@remy.app`;
-    if (email !== ADMIN_EMAIL) return false;
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    const ok = !error && data.user?.email?.toLowerCase() === ADMIN_EMAIL;
-    setIsAdmin(ok);
-    return ok;
+  const login = (username: string, password: string): boolean => {
+    const normalised = username.trim().toLowerCase().replace('@remy.app', '');
+    if (normalised === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+      sessionStorage.setItem(STORAGE_KEY, 'true');
+      setIsAdmin(true);
+      return true;
+    }
+    return false;
   };
 
-  const logout = async () => {
-    await supabase.auth.signOut();
+  const logout = () => {
+    sessionStorage.removeItem(STORAGE_KEY);
     setIsAdmin(false);
   };
 
