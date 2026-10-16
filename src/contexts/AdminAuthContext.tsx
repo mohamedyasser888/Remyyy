@@ -1,49 +1,47 @@
-/**
- * Admin Auth Context
- * Simple hardcoded admin authentication — no Supabase needed.
- * Username: remyadmin  |  Password: remyadmin
- */
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { supabase } from '@/services/supabase';
 
-import { createContext, useContext, useState, type ReactNode } from 'react';
-
-const ADMIN_USERNAME = 'remyadmin';
-const ADMIN_PASSWORD = 'remyadmin';
-const STORAGE_KEY    = 'remy_admin_session';
+const ADMIN_EMAIL = 'remyadmin@remy.app';
 
 interface AdminAuthContextValue {
   isAdmin: boolean;
-  login: (username: string, password: string) => boolean;
-  logout: () => void;
+  login: (username: string, password: string) => Promise<boolean>;
+  logout: () => Promise<void>;
 }
 
 const AdminAuthContext = createContext<AdminAuthContextValue | null>(null);
 
 export function AdminAuthProvider({ children }: { children: ReactNode }) {
-  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
-    return sessionStorage.getItem(STORAGE_KEY) === 'true';
-  });
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  const login = (username: string, password: string): boolean => {
-    // Accept both "remyadmin" or "remyadmin@remy.app" as the username/email
-    const normalised = username.trim().toLowerCase().replace('@remy.app', '');
-    if (normalised === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-      sessionStorage.setItem(STORAGE_KEY, 'true');
-      setIsAdmin(true);
-      return true;
-    }
-    return false;
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsAdmin(data.session?.user.email?.toLowerCase() === ADMIN_EMAIL);
+    };
+    checkSession();
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAdmin(session?.user.email?.toLowerCase() === ADMIN_EMAIL);
+    });
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  const login = async (username: string, password: string): Promise<boolean> => {
+    const entered = username.trim().toLowerCase();
+    const email = entered.includes('@') ? entered : `${entered}@remy.app`;
+    if (email !== ADMIN_EMAIL) return false;
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const ok = !error && data.user?.email?.toLowerCase() === ADMIN_EMAIL;
+    setIsAdmin(ok);
+    return ok;
   };
 
-  const logout = () => {
-    sessionStorage.removeItem(STORAGE_KEY);
+  const logout = async () => {
+    await supabase.auth.signOut();
     setIsAdmin(false);
   };
 
-  return (
-    <AdminAuthContext.Provider value={{ isAdmin, login, logout }}>
-      {children}
-    </AdminAuthContext.Provider>
-  );
+  return <AdminAuthContext.Provider value={{ isAdmin, login, logout }}>{children}</AdminAuthContext.Provider>;
 }
 
 export function useAdminAuth() {
