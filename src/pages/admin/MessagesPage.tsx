@@ -48,6 +48,7 @@ export function MessagesPage() {
   const [loadingConvs, setLoadingConvs]   = useState(true);
   const [loadingMsgs, setLoadingMsgs]     = useState(false);
   const [search, setSearch]               = useState('');
+  const [loadError, setLoadError]         = useState('');
   const bottomRef                         = useRef<HTMLDivElement>(null);
   const inputRef                          = useRef<HTMLInputElement>(null);
 
@@ -55,7 +56,8 @@ export function MessagesPage() {
   selectedUserRef.current = selectedUser;
 
   const loadConversations = useCallback(async () => {
-    const { conversations: c } = await getAllConversations();
+    const { conversations: c, error } = await getAllConversations();
+    setLoadError(error?.message || '');
     setConversations(prev => {
       void prev; // suppress unused warning
       return c.map(conv => {
@@ -81,8 +83,9 @@ export function MessagesPage() {
       prev.map(c => c.user_id === selectedUser.user_id ? { ...c, unread: false } : c)
     );
     setLoadingMsgs(true);
-    getMessages(selectedUser.user_id, true).then(({ messages: m }) => {
+    getMessages(selectedUser.user_id, true).then(({ messages: m, error }) => {
       setMessages(m);
+      if (error) setLoadError(error.message);
       setLoadingMsgs(false);
     });
 
@@ -90,8 +93,9 @@ export function MessagesPage() {
   useRealtimeSync(['messages'], async () => {
     const current = selectedUserRef.current;
     if (!current) return;
-    const { messages: m } = await getMessages(current.user_id, true);
+    const { messages: m, error } = await getMessages(current.user_id, true);
     setMessages(m);
+    if (error) setLoadError(error.message);
     setConversations(prev => prev.map(c => c.user_id === current.user_id ? { ...c, unread: false } : c));
   }, { fallbackMs: 15_000, admin: true });
 
@@ -122,8 +126,10 @@ export function MessagesPage() {
 
     const { message, error } = await sendMessage(selectedUser.user_id, text, 'admin');
     if (!error && message) {
+      setLoadError('');
       setMessages(prev => prev.map(m => m.id === optimistic.id ? message : m));
     } else {
+      setLoadError(error?.message || 'Unable to send the message.');
       setMessages(prev => prev.filter(m => m.id !== optimistic.id));
     }
     setSending(false);
@@ -172,6 +178,12 @@ export function MessagesPage() {
             />
           </div>
         </div>
+
+        {loadError && (
+          <div className="mx-4 mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+            {loadError}
+          </div>
+        )}
 
         {/* List */}
         <div className="flex-1 overflow-y-auto">

@@ -8,7 +8,7 @@ import * as postsService from '@/services/posts';
 import type { Post, PostWithLikes, Category } from '@/types';
 import { handleSupabaseError, logError } from '@/utils/errorHandling';
 import { useAuth } from './useAuth';
-import { awardUploadPoints, awardLikePoints, RMS_PER_POST, RMS_PER_LIKE } from '@/services/points';
+import { awardUploadPoints, RMS_PER_POST } from '@/services/points';
 import { usePointsContext } from '@/contexts/PointsContext';
 import { useRealtimeSync } from './useRealtimeSync';
 
@@ -30,7 +30,7 @@ interface UsePostsResult {
  */
 export function usePosts(initialCategory?: Category | 'All'): UsePostsResult {
   const { user } = useAuth();
-  const { addPoints } = usePointsContext();
+  const { addPoints, refresh: refreshPoints } = usePointsContext();
   const [posts, setPosts] = useState<PostWithLikes[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -167,10 +167,10 @@ export function usePosts(initialCategory?: Category | 'All'): UsePostsResult {
         return { error: handleSupabaseError(toggleError) };
       }
 
-      // Award 2 RMS for liking instantly, then persist (UNIQUE prevents spam)
-      if (!wasLiked) {
-        addPoints(RMS_PER_LIKE);
-        awardLikePoints(user.id, postId);
+      // The database awards 1 RMS to the post owner for each received like.
+      // Refresh immediately when the current user owns the liked post.
+      if (!wasLiked && post.user_id === user.id) {
+        await refreshPoints();
       }
 
       return { error: null };

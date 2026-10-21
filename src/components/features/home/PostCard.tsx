@@ -20,6 +20,7 @@ export function PostCard({ post, onToggleLike, onDelete }: PostCardProps) {
   const { user } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
   const [showZoom, setShowZoom] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const imageUrl = getImageUrl(post.image_path);
   const isOwnPost = user?.id === post.user_id;
 
@@ -27,26 +28,23 @@ export function PostCard({ post, onToggleLike, onDelete }: PostCardProps) {
     <Card hover className="relative overflow-hidden">
       {/* Image */}
       <div 
-        className="relative aspect-[3/4] bg-neutral-200 rounded-lg overflow-hidden mb-3 cursor-pointer hover:opacity-95 transition-smooth"
+        className="post-card-image relative bg-neutral-200 rounded-lg overflow-hidden mb-3 cursor-pointer hover:opacity-95 transition-smooth"
         onClick={() => setShowZoom(true)}
       >
         <img
           src={imageUrl}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full scale-110 object-cover opacity-15 blur-2xl"
+        />
+        <img
+          src={imageUrl}
           alt={post.name}
-          className="w-full h-full object-cover"
+          className="relative z-[1] w-full h-full object-cover transition-transform duration-500 ease-out hover:scale-105"
           loading="lazy"
         />
         {/* Keep the mark visible in the UI even if an older upload is served from cache. */}
         <WatermarkOverlay visible />
-      </div>
-
-      {/* Heart Button */}
-      <div className="absolute top-2 right-2">
-        <HeartButton
-          isFilled={post.is_liked_by_user || false}
-          onClick={() => onToggleLike(post.id)}
-          className="bg-white/90 backdrop-blur-sm shadow-sm"
-        />
       </div>
 
       {/* Delete Button (own posts only) */}
@@ -87,29 +85,29 @@ export function PostCard({ post, onToggleLike, onDelete }: PostCardProps) {
         </div>
       )}
 
-      {/* Like Count */}
-      {post.likes_count > 0 && (
-        <div className="absolute top-2 left-2 right-2 flex justify-center pointer-events-none">
-          <div className="bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 shadow-sm">
-            <span className="text-xs font-medium text-neutral-700">
-              {post.likes_count} {post.likes_count === 1 ? 'like' : 'likes'}
-            </span>
-          </div>
-        </div>
-      )}
+      {/* Actions below the image so the count never covers the clothing. */}
+      <div className="flex items-center gap-1 px-1 pt-1 text-sm font-medium text-neutral-600">
+        <HeartButton
+          isFilled={post.is_liked_by_user || false}
+          onClick={() => onToggleLike(post.id)}
+          size="sm"
+          className="-ml-2"
+        />
+        <span>{post.likes_count} {post.likes_count === 1 ? 'like' : 'likes'}</span>
+      </div>
 
       {/* Info */}
-      <div>
-        <h3 className="font-medium text-neutral-900 truncate">{post.name}</h3>
-        <div className="flex items-center gap-2 text-sm text-neutral-600 mt-1">
-          <span>{post.size}</span>
+      <div className="min-w-0 space-y-2">
+        <h3 className="text-base font-semibold leading-snug text-neutral-900 break-words">{post.name}</h3>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-5 text-neutral-600">
+          {post.size && <span className="font-medium">Size: {post.size}</span>}
           <span>•</span>
-          <span className="truncate">{post.category}</span>
+          <span className="break-words">{post.category}</span>
         </div>
 
         {/* Brand badge */}
         {post.brand && (
-          <div className="flex items-center gap-1.5 mt-1.5">
+          <div className="flex items-center gap-1.5">
             {post.brand_partner_id ? (
               <span className="inline-flex items-center gap-1 text-xs font-semibold bg-primary-50 text-primary-600 border border-primary-200 px-2 py-0.5 rounded-full">
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -130,31 +128,52 @@ export function PostCard({ post, onToggleLike, onDelete }: PostCardProps) {
         )}
 
         {post.description && (
-          <p className="text-sm text-neutral-600 mt-2 line-clamp-2">
+          <p className="post-card-description text-sm leading-6 text-neutral-600 line-clamp-3 break-words">
             {post.description}
           </p>
         )}
 
         {/* Review */}
         {post.review && (
-          <div className="mt-2 bg-neutral-50 border border-neutral-100 rounded-lg px-3 py-2">
-            <div className="flex items-center gap-1 mb-1">
+          <div className="bg-neutral-50 border border-neutral-100 rounded-lg px-3 py-2.5">
+            <div className="flex items-center gap-1 mb-1.5">
               <svg className="w-3 h-3 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
               </svg>
               <span className="text-xs font-semibold text-neutral-500">Review</span>
             </div>
-            <p className="text-xs text-neutral-600 line-clamp-3 italic">"{post.review}"</p>
+            <p className="post-card-review text-xs leading-5 text-neutral-600 line-clamp-3 italic break-words">"{post.review}"</p>
           </div>
         )}
 
         {/* Star rating */}
         {(post as any).rating > 0 && (
-          <div className="mt-2">
+          <div>
             <StarRating value={(post as any).rating} size="sm" />
           </div>
         )}
-        <div className="flex items-center gap-1 text-xs text-neutral-500 mt-2">
+
+        <button
+          type="button"
+          onClick={() => setShowDetails(value => !value)}
+          aria-expanded={showDetails}
+          className="flex w-full items-center justify-between rounded-lg bg-neutral-50 px-3 py-2 text-left text-xs font-semibold text-primary-700 transition-colors hover:bg-primary-50"
+        >
+          <span>{showDetails ? 'Hide details' : 'View details'}</span>
+          <svg className={`h-4 w-4 transition-transform duration-200 ${showDetails ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        {showDetails && (
+          <div className="animate-slide-up rounded-lg border border-neutral-100 bg-neutral-50 px-3 py-2 text-xs leading-5 text-neutral-600">
+            {post.brand && <p><span className="font-semibold text-neutral-700">Brand:</span> {post.brand}</p>}
+            {post.brand_partner_id && <p><span className="font-semibold text-neutral-700">Partner:</span> {post.brand_partner_id}</p>}
+            {post.review && <p><span className="font-semibold text-neutral-700">Review:</span> {post.review}</p>}
+            <p><span className="font-semibold text-neutral-700">Category:</span> {post.category}</p>
+            {post.size && <p><span className="font-semibold text-neutral-700">Size:</span> {post.size}</p>}
+          </div>
+        )}
+        <div className="flex items-center gap-1 text-xs leading-5 text-neutral-500">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>

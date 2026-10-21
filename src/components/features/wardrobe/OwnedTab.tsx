@@ -47,7 +47,7 @@ export function OwnedTab({ onShareToHome }: OwnedTabProps) {
     const { error } = await addItem({
       user_id: profile.id,
       name: formData.name,
-      size: formData.size,
+      size: formData.size || null,
       category: formData.category,
       image_path: formData.imagePath,
       is_favourite: false,
@@ -65,7 +65,7 @@ export function OwnedTab({ onShareToHome }: OwnedTabProps) {
 
     const updates: any = {
       name: formData.name,
-      size: formData.size,
+      size: formData.size || null,
       category: formData.category,
       rating: formData.rating || null,
     };
@@ -144,6 +144,8 @@ export function OwnedTab({ onShareToHome }: OwnedTabProps) {
           selected={selectedCategory}
           onChange={setSelectedCategory}
           getLabel={(category) => t(`categories.${category.toLowerCase().replace(/\s+/g, '')}`)}
+          showMoreLabel={t('common.showMore')}
+          showLessLabel={t('common.showLess')}
         />
       )}
 

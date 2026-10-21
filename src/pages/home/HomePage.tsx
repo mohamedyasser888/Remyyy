@@ -34,7 +34,7 @@ export function HomePage() {
     const { error } = await createPost({
       user_id: profile.id,
       name: data.name,
-      size: data.size as any,
+      size: data.size || null,
       category: data.category as any,
       description: data.description,
       image_path: data.imagePath!,
@@ -135,6 +135,8 @@ export function HomePage() {
                   ? t('common.all') 
                   : t(`categories.${category.toLowerCase().replace(/\s+/g, '')}`)
               }
+              showMoreLabel={t('common.showMore')}
+              showLessLabel={t('common.showLess')}
             />
           </div>
         </div>
@@ -162,14 +164,17 @@ export function HomePage() {
               }}
             />
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="vertical-snap-feed">
               {posts.map(post => (
-                <PostCard
-                  key={post.id}
-                  post={post}
-                  onToggleLike={handleToggleLike}
-                  onDelete={handleDeleteClick}
-                />
+                <div key={post.id} className="vertical-snap-item">
+                  <div className="w-full max-w-xl">
+                    <PostCard
+                      post={post}
+                      onToggleLike={handleToggleLike}
+                      onDelete={handleDeleteClick}
+                    />
+                  </div>
+                </div>
               ))}
             </div>
           )}

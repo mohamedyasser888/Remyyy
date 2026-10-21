@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import { TopBar } from '@/components/layout';
-import { AnimatedBackground, Card, Loader, EmptyState, EmptyStateIcons, WatermarkOverlay } from '@/components/common';
+import { AnimatedBackground, Card, Loader, EmptyState, EmptyStateIcons, WatermarkOverlay, FilterChips } from '@/components/common';
 import { StarRating } from '@/components/common';
 import { useT } from '@/i18n';
 import { useAuth } from '@/hooks/useAuth';
@@ -19,6 +19,7 @@ export function TrendsPage() {
   const [items, setItems]     = useState<TrendItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [liking, setLiking]   = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
   useEffect(() => {
     setLoading(true);
@@ -80,6 +81,11 @@ export function TrendsPage() {
     setLiking(null);
   }
 
+  const categories = ['All', ...Array.from(new Set(items.map(item => item.category)))];
+  const filteredItems = selectedCategory === 'All'
+    ? items
+    : items.filter(item => item.category === selectedCategory);
+
   return (
     <>
       <AnimatedBackground variant="home" />
@@ -103,9 +109,16 @@ export function TrendsPage() {
               description={t('trends.emptySubtitle')}
             />
           ) : (
-            <div className="max-w-[1500px] grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-              {items.map((item, idx) => (
-                <Card key={item.id} hover className="overflow-hidden relative">
+            <>
+              {categories.length > 1 && (
+                <div className="mb-6">
+                  <FilterChips options={categories} selected={selectedCategory} onChange={setSelectedCategory} />
+                </div>
+              )}
+              <div className="vertical-snap-feed">
+              {filteredItems.map((item, idx) => (
+                <div key={item.id} className="vertical-snap-item">
+                <Card hover className="w-full max-w-xl overflow-hidden relative">
 
                   {/* Rank badge top 3 */}
                   {idx < 3 && (
@@ -117,11 +130,11 @@ export function TrendsPage() {
                   )}
 
                   {/* Image */}
-                  <div className="relative aspect-[3/4] bg-neutral-100 rounded-lg overflow-hidden mb-3">
+                  <div className="feed-card-image relative bg-neutral-100 rounded-lg overflow-hidden mb-3">
                     <img
                       src={getImageUrl(item.image_path)}
                       alt={item.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain p-2 transition-transform duration-500 ease-out hover:scale-105"
                     />
                     <WatermarkOverlay visible />
                   </div>
@@ -174,8 +187,10 @@ export function TrendsPage() {
                     </div>
                   </div>
                 </Card>
+                </div>
               ))}
-            </div>
+              </div>
+            </>
           )}
 
         </div>

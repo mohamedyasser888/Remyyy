@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from 'react';
 import { TopBar } from '@/components/layout';
-import { AnimatedBackground, Card, Loader, EmptyState, EmptyStateIcons, StarRating, WatermarkOverlay } from '@/components/common';
+import { AnimatedBackground, Card, Loader, EmptyState, EmptyStateIcons, StarRating, WatermarkOverlay, FilterChips } from '@/components/common';
 import { getPartners, getPartnerPosts, type Partner, type PartnerPost } from '@/services/partners';
 import { getImageUrl } from '@/services/storage';
 import { useT } from '@/i18n';
@@ -110,21 +110,13 @@ export function PartnersPage() {
 
             {/* Category filter */}
             {categories.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {categories.map(cat => (
-                  <button
-                    key={cat}
-                    onClick={() => setCategoryFilter(cat)}
-                    className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                      categoryFilter === cat
-                        ? 'bg-primary-500 text-white'
-                        : 'bg-white text-neutral-600 border border-neutral-200 hover:bg-neutral-50'
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
+              <FilterChips
+                options={categories}
+                selected={categoryFilter}
+                onChange={setCategoryFilter}
+                showMoreLabel={t('common.showMore')}
+                showLessLabel={t('common.showLess')}
+              />
             )}
 
             {/* Posts grid */}

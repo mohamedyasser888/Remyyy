@@ -38,6 +38,7 @@ export interface TrendItem {
   admin_id: string;
   name: string;
   category: string;
+  size?: string | null;
   description: string;
   image_path: string;
   created_at: string;
@@ -269,7 +270,7 @@ export async function toggleTrendLike(
 
 export async function createTrendItem(
   _adminId: string,
-  item: { name: string; category: string; description: string; rating: number; image: File }
+  item: { name: string; category: string; size?: string | null; description: string; rating: number; image: File }
 ): Promise<{ item: TrendItem | null; error: Error | null }> {
   try {
     const { path, error: uploadErr } = await uploadImage(item.image, 'admin');
@@ -280,6 +281,7 @@ export async function createTrendItem(
       .insert({
         name:        item.name,
         category:    item.category,
+        size:        item.size || null,
         description: item.description,
         rating:      item.rating || null,
         image_path:  path,

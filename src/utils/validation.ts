@@ -3,7 +3,7 @@
  * Form validation rules and helper functions
  */
 
-import { VALIDATION, ERROR_MESSAGES } from './constants';
+import { VALIDATION, ERROR_MESSAGES, categoryRequiresSize } from './constants';
 
 // ============================================================================
 // Validation Functions
@@ -197,9 +197,11 @@ export function validateItemForm(data: ItemFormData): {
     errors.name = nameValidation.error!;
   }
 
-  const sizeValidation = validateRequired(data.size);
-  if (!sizeValidation.valid) {
-    errors.size = sizeValidation.error!;
+  if (categoryRequiresSize(data.category)) {
+    const sizeValidation = validateRequired(data.size);
+    if (!sizeValidation.valid) {
+      errors.size = sizeValidation.error!;
+    }
   }
 
   const categoryValidation = validateRequired(data.category);

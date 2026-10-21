@@ -64,13 +64,12 @@ export function Register() {
         <div className="bg-white rounded-2xl shadow-2xl p-8 sm:p-10">
           {/* Header */}
           <div className="text-center mb-8">
-            <img src="/rwm.jpeg" alt="Remy mark" className="mx-auto mb-4 h-20 w-20 rounded-2xl object-cover shadow-md" />
+            <h1 className="text-5xl font-black tracking-tight text-primary-600">Remy</h1>
             <div className="hidden">
               <svg className="w-7 h-7 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
               </svg>
             </div>
-            <img src="/remy-transparent.png" alt="Remy" className="mx-auto w-64 max-w-full scale-110 object-contain" />
             <h2 className="text-xl font-bold text-neutral-900 mt-1">{t('auth.signUpTitle')}</h2>
             <p className="text-sm text-neutral-500 mt-1">{t('auth.signUpSubtitle')}</p>
           </div>

@@ -10,7 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { useT } from '@/i18n';
 import { validateItemForm } from '@/utils/validation';
-import { getCategoriesForGender, SIZES } from '@/utils/constants';
+import { getCategoriesForGender, categoryRequiresSize } from '@/utils/constants';
 import { getErrorMessage } from '@/utils/errorHandling';
 import type { WardrobeItem, Size, Category } from '@/types';
 
@@ -45,6 +45,7 @@ export function ItemForm({ isOpen, onClose, onSubmit, editItem }: ItemFormProps)
   const [loading, setLoading] = useState(false);
 
   const categories = profile ? getCategoriesForGender(profile.gender) : [];
+  const sizeRequired = categoryRequiresSize(formData.category);
 
   useEffect(() => {
     if (editItem) {
@@ -64,7 +65,14 @@ export function ItemForm({ isOpen, onClose, onSubmit, editItem }: ItemFormProps)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === 'category' && !categoryRequiresSize(value)) {
+      setFormData(prev => ({ ...prev, category: value as Category | '', size: '' }));
+      setErrors(prev => ({ ...prev, size: '' }));
+    } else if (name === 'category') {
+      setFormData(prev => ({ ...prev, category: value as Category }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -118,7 +126,7 @@ export function ItemForm({ isOpen, onClose, onSubmit, editItem }: ItemFormProps)
 
       await onSubmit({
         name: formData.name,
-        size: formData.size,
+        size: sizeRequired ? formData.size.trim() : '',
         category: formData.category,
         rating: formData.rating,
         imagePath,
@@ -169,23 +177,20 @@ export function ItemForm({ isOpen, onClose, onSubmit, editItem }: ItemFormProps)
           disabled={loading}
         />
 
-        {/* Size */}
-        <Select
-          label={t('wardrobe.size')}
-          name="size"
-          value={formData.size}
-          onChange={handleChange}
-          error={errors.size}
-          required
-          disabled={loading}
-        >
-          <option value="">{t('wardrobe.selectSize')}</option>
-          {SIZES.map(size => (
-            <option key={size} value={size}>
-              {t(`sizes.${size}`)}
-            </option>
-          ))}
-        </Select>
+        {sizeRequired ? (
+          <Input
+            label={t('wardrobe.size')}
+            name="size"
+            value={formData.size}
+            onChange={handleChange}
+            error={errors.size}
+            required
+            disabled={loading}
+            placeholder="e.g. Medium, 38, One size"
+          />
+        ) : formData.category ? (
+          <p className="text-xs text-neutral-500">Size is not required for this category.</p>
+        ) : null}
 
         {/* Category */}
         <Select

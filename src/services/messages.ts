@@ -8,6 +8,18 @@
 
 import { supabase, supabaseAdmin } from './supabase';
 
+// Admin login is handled by the app's own admin session, not a Supabase auth
+// session. Use the service-role client for admin-only message operations so
+// RLS does not hide conversations from the admin panel.
+const adminDb = supabaseAdmin ?? supabase;
+
+function getAdminDb() {
+  if (!supabaseAdmin) {
+    throw new Error('Admin messaging requires VITE_SUPABASE_SERVICE_ROLE_KEY to be configured.');
+  }
+  return adminDb;
+}
+
 export interface Message {
   id: string;
   user_id: string;
@@ -35,7 +47,7 @@ export async function getMessages(
   isAdmin: boolean
 ): Promise<{ messages: Message[]; error: Error | null }> {
   try {
-    let query = supabase
+    let query = (isAdmin ? getAdminDb() : supabase)
       .from('messages')
       .select('*')
       .eq('user_id', userId)
@@ -65,7 +77,7 @@ export async function sendMessage(
   sender: 'user' | 'admin'
 ): Promise<{ message: Message | null; error: Error | null }> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (sender === 'admin' ? getAdminDb() : supabase)
       .from('messages')
       .insert({ user_id: userId, content: content.trim(), sender })
       .select()
@@ -86,7 +98,7 @@ export async function deleteMessage(
 ): Promise<{ error: Error | null }> {
   try {
     const field = isAdmin ? 'deleted_by_admin' : 'deleted_by_user';
-    const { error } = await supabase
+    const { error } = await (isAdmin ? getAdminDb() : supabase)
       .from('messages')
       .update({ [field]: true })
       .eq('id', messageId);
@@ -100,7 +112,7 @@ export async function deleteMessage(
 
 export async function markConversationRead(userId: string): Promise<{ error: Error | null }> {
   try {
-    const { error } = await supabase.rpc('mark_messages_read', { target_user_id: userId });
+    const { error } = await getAdminDb().rpc('mark_messages_read', { target_user_id: userId });
     if (error) throw error;
     return { error: null };
   } catch (error) {
@@ -125,7 +137,7 @@ export async function getAllConversations(): Promise<{
   error: Error | null;
 }> {
   try {
-    const { data: messages, error: mErr } = await supabase
+    const { data: messages, error: mErr } = await getAdminDb()
       .from('messages')
       .select('user_id, content, sender, created_at, deleted_by_admin, admin_read_at')
       .eq('deleted_by_admin', false)
@@ -133,17 +145,11 @@ export async function getAllConversations(): Promise<{
 
     if (mErr) throw mErr;
 
-    // Collect unique user_ids from messages
-    const userIds = [...new Set((messages || []).map(m => m.user_id))];
-
-    // Fetch only the profiles we actually need — select all columns so we can
-    // fall back through any name field the DB has (display_name, full_name, name, email)
-    const { data: profiles, error: pErr } = userIds.length > 0
-      ? await supabase
-          .from('profiles')
-          .select('*')
-          .in('id', userIds)
-      : { data: [], error: null };
+    // Load all profiles, not only users who already sent a message. This lets
+    // the admin see every registered user and start a new conversation.
+    const { data: profiles, error: pErr } = await getAdminDb()
+      .from('profiles')
+      .select('*');
 
     if (pErr) throw pErr;
 
@@ -161,7 +167,7 @@ export async function getAllConversations(): Promise<{
     // For users still missing a name, read directly from auth.users via admin client
     if (supabaseAdmin) {
       const adminClient = supabaseAdmin; // non-null inside the block
-      const missingIds = userIds.filter(id => !profileMap[id]);
+      const missingIds = [...new Set((messages || []).map(m => m.user_id))].filter(id => !profileMap[id]);
       await Promise.all(missingIds.map(async (id) => {
         const { data } = await adminClient.auth.admin.getUserById(id);
         const meta = data?.user?.user_metadata;
@@ -182,8 +188,15 @@ export async function getAllConversations(): Promise<{
       convMap[msg.user_id].msgs.push(msg);
     });
 
-    const conversations: ConversationSummary[] = Object.entries(convMap).map(([user_id, { msgs }]) => {
-      const lastMsg   = msgs[msgs.length - 1];
+    const profileRows = (profiles || []) as Array<Record<string, unknown>>;
+    const allUserIds = new Set([
+      ...profileRows.map(profile => profile.id as string),
+      ...(messages || []).map(message => message.user_id),
+    ]);
+
+    const conversations: ConversationSummary[] = [...allUserIds].map(user_id => {
+      const msgs = convMap[user_id]?.msgs || [];
+      const lastMsg = msgs[msgs.length - 1];
       // Only user messages received after the admin last opened the conversation are unread.
       const unread = msgs.some(msg =>
         msg.sender === 'user' &&
@@ -193,8 +206,8 @@ export async function getAllConversations(): Promise<{
       return {
         user_id,
         display_name:      profileMap[user_id] || `User ${user_id.slice(0, 8)}`,
-        last_message:      lastMsg.content,
-        last_message_time: lastMsg.created_at,
+        last_message:      lastMsg?.content || 'No messages yet',
+        last_message_time: lastMsg?.created_at || new Date(0).toISOString(),
         unread,
       };
     });

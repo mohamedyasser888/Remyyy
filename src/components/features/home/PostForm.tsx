@@ -10,7 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { useT } from '@/i18n';
 import { validatePostForm } from '@/utils/validation';
-import { ALL_CATEGORIES, SIZES } from '@/utils/constants';
+import { ALL_CATEGORIES, categoryRequiresSize } from '@/utils/constants';
 import { getErrorMessage } from '@/utils/errorHandling';
 import { getPartners } from '@/services/partners';
 import type { Partner } from '@/services/partners';
@@ -61,6 +61,7 @@ export function PostForm({ isOpen, onClose, onSubmit, prefillItem }: PostFormPro
   const [partners, setPartners]             = useState<Partner[]>([]);
   const [partnersLoading, setPartnersLoading] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
+  const sizeRequired = categoryRequiresSize(formData.category);
 
   // Load partners when toggled on
   useEffect(() => {
@@ -111,7 +112,14 @@ export function PostForm({ isOpen, onClose, onSubmit, prefillItem }: PostFormPro
         setReviewCount(value.length);
       }
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      if (name === 'category' && !categoryRequiresSize(value)) {
+        setFormData(prev => ({ ...prev, category: value as Category | '', size: '' }));
+        setErrors(prev => ({ ...prev, size: '' }));
+      } else if (name === 'category') {
+        setFormData(prev => ({ ...prev, category: value as Category }));
+      } else {
+        setFormData(prev => ({ ...prev, [name]: value }));
+      }
     }
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
@@ -179,7 +187,7 @@ export function PostForm({ isOpen, onClose, onSubmit, prefillItem }: PostFormPro
 
       await onSubmit({
         name: formData.name,
-        size: formData.size,
+        size: sizeRequired ? formData.size.trim() : '',
         category: formData.category,
         description: formData.description,
         rating: formData.rating,
@@ -225,21 +233,21 @@ export function PostForm({ isOpen, onClose, onSubmit, prefillItem }: PostFormPro
           disabled={loading}
         />
 
-        {/* Size */}
-        <Select
-          label={t('wardrobe.size')}
-          name="size"
-          value={formData.size}
-          onChange={handleChange}
-          error={errors.size}
-          required
-          disabled={loading}
-        >
-          <option value="">{t('wardrobe.selectSize')}</option>
-          {SIZES.map(size => (
-            <option key={size} value={size}>{t(`sizes.${size}`)}</option>
-          ))}
-        </Select>
+        {/* Size is free text for applicable categories and hidden for accessories. */}
+        {sizeRequired ? (
+          <Input
+            label={t('wardrobe.size')}
+            name="size"
+            value={formData.size}
+            onChange={handleChange}
+            error={errors.size}
+            required
+            disabled={loading}
+            placeholder="e.g. Medium, 38, One size"
+          />
+        ) : formData.category ? (
+          <p className="text-xs text-neutral-500">Size is not required for this category.</p>
+        ) : null}
 
         {/* Category */}
         <Select

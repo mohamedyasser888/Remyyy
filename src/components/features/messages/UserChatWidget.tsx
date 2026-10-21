@@ -39,6 +39,7 @@ export function UserChatWidget() {
   const [input, setInput]       = useState('');
   const [sending, setSending]   = useState(false);
   const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState('');
   const [hasUnread, setHasUnread] = useState(false);
   const bottomRef               = useRef<HTMLDivElement>(null);
   const inputRef                = useRef<HTMLInputElement>(null);
@@ -50,7 +51,8 @@ export function UserChatWidget() {
   // ── Poll every 2s for new messages ───────────────────────────────────────
   const poll = useCallback(async () => {
     if (!user) return;
-    const { messages: fresh } = await getMessages(user.id, false);
+    const { messages: fresh, error: loadError } = await getMessages(user.id, false);
+    setError(loadError?.message || '');
     setMessages(fresh);
 
     // Check for unread admin replies when chat is closed
@@ -121,8 +123,10 @@ export function UserChatWidget() {
 
     const { message, error } = await sendMessage(user.id, text, 'user');
     if (!error && message) {
+      setError('');
       setMessages(prev => prev.map(m => m.id === optimistic.id ? message : m));
     } else {
+      setError(error?.message || 'Unable to send your message.');
       setMessages(prev => prev.filter(m => m.id !== optimistic.id));
     }
     setSending(false);
@@ -170,6 +174,11 @@ export function UserChatWidget() {
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto bg-neutral-50 px-4 py-3">
+            {error && (
+              <div className="mb-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                {error}
+              </div>
+            )}
             {loading ? (
               <div className="flex justify-center py-10">
                 <div className="w-6 h-6 border-2 border-primary-400 border-t-transparent rounded-full animate-spin" />

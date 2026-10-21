@@ -11,8 +11,8 @@ import {
   type Partner, type PartnerPost
 } from '@/services/partners';
 import { getImageUrl } from '@/services/storage';
-import { Loader, Card, Button, Input, StarRating } from '@/components/common';
-import { ALL_CATEGORIES } from '@/utils/constants';
+import { Loader, Card, Button, Input, StarRating, FilterChips } from '@/components/common';
+import { ALL_CATEGORIES, categoryRequiresSize } from '@/utils/constants';
 import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 
 export function AdminPartnersPage() {
@@ -21,6 +21,7 @@ export function AdminPartnersPage() {
   const [selected, setSelected]       = useState<Partner | null>(null);
   const [posts, setPosts]             = useState<PartnerPost[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
   // Partner form
   const [partnerForm, setPartnerForm] = useState({ name: '', rating: 0, website_url: '', thumbnail: null as File | null, preview: '' });
@@ -28,7 +29,7 @@ export function AdminPartnersPage() {
   const partnerFileRef = useRef<HTMLInputElement>(null);
 
   // Post form
-  const [postForm, setPostForm] = useState({ name: '', category: ALL_CATEGORIES[0] as string, description: '', rating: 0, image: null as File | null, preview: '' });
+  const [postForm, setPostForm] = useState({ name: '', category: ALL_CATEGORIES[0] as string, size: '', description: '', rating: 0, image: null as File | null, preview: '' });
   const [savingPost, setSavingPost] = useState(false);
   const postFileRef = useRef<HTMLInputElement>(null);
 
@@ -58,11 +59,17 @@ export function AdminPartnersPage() {
 
   async function openPartner(partner: Partner) {
     setSelected(partner);
+    setSelectedCategory('All');
     setLoadingPosts(true);
     const { posts } = await getPartnerPosts(partner.id);
     setPosts(posts);
     setLoadingPosts(false);
   }
+
+  const categories = ['All', ...Array.from(new Set(posts.map(post => post.category)))];
+  const filteredPosts = selectedCategory === 'All'
+    ? posts
+    : posts.filter(post => post.category === selectedCategory);
 
   // ── Add partner ─────────────────────────────────────────────────────────
   async function handleAddPartner(e: React.FormEvent) {
@@ -100,10 +107,11 @@ export function AdminPartnersPage() {
       description: postForm.description,
       rating:      postForm.rating || null,
       image:       postForm.image,
+      size:        categoryRequiresSize(postForm.category) ? postForm.size.trim() : null,
     });
     if (post) setPosts(prev => [post, ...prev]);
     if (error) alert('Failed: ' + error.message);
-    setPostForm({ name: '', category: ALL_CATEGORIES[0], description: '', rating: 0, image: null, preview: '' });
+    setPostForm({ name: '', category: ALL_CATEGORIES[0], size: '', description: '', rating: 0, image: null, preview: '' });
     if (postFileRef.current) postFileRef.current.value = '';
     setSavingPost(false);
   }
@@ -146,12 +154,18 @@ export function AdminPartnersPage() {
               <label className="block text-sm font-medium text-slate-700 mb-1">Category *</label>
               <select
                 value={postForm.category}
-                onChange={e => setPostForm(f => ({ ...f, category: e.target.value }))}
+                onChange={e => setPostForm(f => ({ ...f, category: e.target.value, size: categoryRequiresSize(e.target.value) ? f.size : '' }))}
                 className="w-full border border-neutral-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
               >
                 {ALL_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
+            {categoryRequiresSize(postForm.category) && (
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Size *</label>
+                <Input value={postForm.size} onChange={e => setPostForm(f => ({ ...f, size: e.target.value }))} placeholder="e.g. Medium, 38, One size" required />
+              </div>
+            )}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
               <Input value={postForm.description} onChange={e => setPostForm(f => ({ ...f, description: e.target.value }))} placeholder="Short description (optional)" />
@@ -191,8 +205,12 @@ export function AdminPartnersPage() {
         ) : posts.length === 0 ? (
           <div className="text-center py-12 text-slate-400">No items yet. Add the first one above!</div>
         ) : (
-          <div className="max-w-[1500px] grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-            {posts.map(post => (
+          <>
+            <div className="mb-6">
+              <FilterChips options={categories} selected={selectedCategory} onChange={setSelectedCategory} />
+            </div>
+            <div className="max-w-[1500px] grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+            {filteredPosts.map(post => (
               <Card key={post.id} className="overflow-hidden">
                 <div className="aspect-[3/4] bg-neutral-100 rounded-lg overflow-hidden mb-3">
                   <img src={getImageUrl(post.image_path)} alt={post.name} className="w-full h-full object-cover" />
@@ -208,7 +226,8 @@ export function AdminPartnersPage() {
                 </div>
               </Card>
             ))}
-          </div>
+            </div>
+          </>
         )}
       </div>
     );

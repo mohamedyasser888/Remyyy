@@ -16,7 +16,7 @@ export type Gender = 'female' | 'male';
 /**
  * Clothing sizes - standardized across all items
  */
-export type Size = 'S' | 'M' | 'L' | 'XL' | '2XL' | '3XL';
+export type Size = string;
 
 /**
  * Female-specific clothing categories

@@ -78,6 +78,13 @@ export function getCategoriesForGender(gender: Gender): readonly Category[] {
  */
 export const SIZES: readonly Size[] = ['S', 'M', 'L', 'XL', '2XL', '3XL'] as const;
 
+/** Categories where a size does not apply. */
+export const SIZELESS_CATEGORIES = new Set<string>(['Belts', 'Accessories', 'Bags']);
+
+export function categoryRequiresSize(category: string | null | undefined): boolean {
+  return Boolean(category) && !SIZELESS_CATEGORIES.has(category ?? '');
+}
+
 // ============================================================================
 // Image Configuration
 // ============================================================================

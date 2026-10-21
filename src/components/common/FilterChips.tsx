@@ -3,11 +3,17 @@
  * Horizontal scrollable category filter chips
  */
 
+import { useEffect, useState } from 'react';
+
 interface FilterChipsProps<T extends string> {
   options: readonly T[];
   selected: T;
   onChange: (value: T) => void;
   getLabel?: (value: T) => string;
+  initialVisibleCount?: number;
+  visibleStep?: number;
+  showMoreLabel?: string;
+  showLessLabel?: string;
 }
 
 export function FilterChips<T extends string>({
@@ -15,10 +21,24 @@ export function FilterChips<T extends string>({
   selected,
   onChange,
   getLabel = (value) => value,
+  initialVisibleCount = 5,
+  visibleStep = 5,
+  showMoreLabel = 'Show more',
+  showLessLabel = 'Show less',
 }: FilterChipsProps<T>) {
+  const [visibleCount, setVisibleCount] = useState(initialVisibleCount);
+  const optionsKey = options.join('\u0001');
+
+  useEffect(() => {
+    setVisibleCount(initialVisibleCount);
+  }, [initialVisibleCount, optionsKey]);
+
+  const hasMore = visibleCount < options.length;
+  const visibleOptions = options.slice(0, visibleCount);
+
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-      {options.map((option, index) => {
+    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+      {visibleOptions.map((option, index) => {
         const isSelected = selected === option;
         
         return (
@@ -26,7 +46,7 @@ export function FilterChips<T extends string>({
             key={option}
             onClick={() => onChange(option)}
             style={{ animationDelay: `${index * 45}ms` }}
-            className={`animate-slide-up touch-target min-w-0 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200
+            className={`animate-slide-up shrink-0 min-w-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all duration-200
               ${
                 isSelected
                   ? 'bg-primary-500 text-white shadow-md shadow-primary-500/20 ring-2 ring-primary-200 ring-offset-1'
@@ -39,6 +59,17 @@ export function FilterChips<T extends string>({
           </button>
         );
       })}
+
+      {options.length > initialVisibleCount && (
+        <button
+          type="button"
+          onClick={() => setVisibleCount(hasMore ? Math.min(visibleCount + visibleStep, options.length) : initialVisibleCount)}
+          className="shrink-0 rounded-full border border-primary-200 bg-primary-50/70 px-3.5 py-1.5 text-xs font-semibold text-primary-700 transition-colors hover:bg-primary-100"
+          aria-expanded={!hasMore}
+        >
+          {hasMore ? showMoreLabel : showLessLabel}
+        </button>
+      )}
     </div>
   );
 }

@@ -7,9 +7,9 @@ import { useEffect, useRef, useState } from 'react';
 import { getTrendItems, createTrendItem, deleteTrendItem, type TrendItem } from '@/services/admin';
 import { getImageUrl } from '@/services/storage';
 import { useAuth } from '@/hooks/useAuth';
-import { Loader, Card, Button, Input } from '@/components/common';
+import { Loader, Card, Button, Input, FilterChips } from '@/components/common';
 import { StarRating } from '@/components/common';
-import { ALL_CATEGORIES } from '@/utils/constants';
+import { ALL_CATEGORIES, categoryRequiresSize } from '@/utils/constants';
 import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 
 export function AdminTrendsPage() {
@@ -18,11 +18,13 @@ export function AdminTrendsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving]   = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const fileRef               = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
     name: '',
     category: ALL_CATEGORIES[0] as string,
+    size: '',
     description: '',
     rating: 0,
     image: null as File | null,
@@ -56,13 +58,14 @@ export function AdminTrendsPage() {
     const { item, error } = await createTrendItem(user.id, {
       name: form.name,
       category: form.category,
+      size: categoryRequiresSize(form.category) ? form.size.trim() : null,
       description: form.description,
       rating: form.rating,
       image: form.image,
     });
     if (item) setItems(prev => [item, ...prev]);
     if (error) alert('Failed to add trend: ' + error.message);
-    setForm({ name: '', category: ALL_CATEGORIES[0], description: '', rating: 0, image: null, preview: '' });
+    setForm({ name: '', category: ALL_CATEGORIES[0], size: '', description: '', rating: 0, image: null, preview: '' });
     if (fileRef.current) fileRef.current.value = '';
     setSaving(false);
   }
@@ -74,6 +77,11 @@ export function AdminTrendsPage() {
     setItems(prev => prev.filter(i => i.id !== item.id));
     setDeleting(null);
   }
+
+  const categories = ['All', ...Array.from(new Set(items.map(item => item.category)))];
+  const filteredItems = selectedCategory === 'All'
+    ? items
+    : items.filter(item => item.category === selectedCategory);
 
   return (
     <div className="p-8">
@@ -99,12 +107,18 @@ export function AdminTrendsPage() {
             <label className="block text-sm font-medium text-slate-700 mb-1">Category *</label>
             <select
               value={form.category}
-              onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
+              onChange={e => setForm(f => ({ ...f, category: e.target.value, size: categoryRequiresSize(e.target.value) ? f.size : '' }))}
               className="w-full border border-neutral-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
             >
               {ALL_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
+          {categoryRequiresSize(form.category) && (
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Size *</label>
+              <Input value={form.size} onChange={e => setForm(f => ({ ...f, size: e.target.value }))} placeholder="e.g. Medium, 38, One size" required />
+            </div>
+          )}
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
             <Input
@@ -151,11 +165,16 @@ export function AdminTrendsPage() {
       ) : items.length === 0 ? (
         <div className="text-center py-20 text-slate-400">No trend items yet. Add one above!</div>
       ) : (
-        <div className="max-w-[1500px] grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-          {items.map(item => (
-            <Card key={item.id} className="overflow-hidden">
-              <div className="aspect-[3/4] bg-neutral-100 rounded-lg overflow-hidden mb-3">
-                <img src={getImageUrl(item.image_path)} alt={item.name} className="w-full h-full object-cover" />
+        <>
+          <div className="mb-6">
+            <FilterChips options={categories} selected={selectedCategory} onChange={setSelectedCategory} />
+          </div>
+          <div className="vertical-snap-feed">
+          {filteredItems.map(item => (
+            <div key={item.id} className="vertical-snap-item">
+            <Card className="w-full max-w-xl overflow-hidden">
+              <div className="feed-card-image bg-neutral-100 rounded-lg overflow-hidden mb-3">
+                <img src={getImageUrl(item.image_path)} alt={item.name} className="w-full h-full object-contain p-2 transition-transform duration-500 ease-out hover:scale-105" />
               </div>
               <div className="px-1">
                 <p className="font-medium text-slate-800 truncate">{item.name}</p>
@@ -180,8 +199,10 @@ export function AdminTrendsPage() {
                 </div>
               </div>
             </Card>
+            </div>
           ))}
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

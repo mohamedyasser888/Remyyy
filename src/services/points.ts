@@ -1,7 +1,7 @@
 /**
  * Points Service
  * - 10 RMS when user uploads a post
- * - 2 RMS when user likes a post (no spam — UNIQUE constraint prevents double earn)
+ * - 1 RMS when one of the user's posts receives a like
  * - Points are never removed when unlike happens
  */
 
@@ -12,7 +12,7 @@ import { supabase, supabaseAdmin } from './supabase';
 const db = supabaseAdmin ?? supabase;
 
 export const RMS_PER_POST = 10;
-export const RMS_PER_LIKE = 2;
+export const RMS_PER_RECEIVED_LIKE = 1;
 
 export type RemyTierId = 'rems_muse' | 'remy_icon' | 'remy_ulite';
 
@@ -49,7 +49,7 @@ export function getRemyTier(points: number): RemyTier {
 
 function pointsForAction(action: string | null | undefined, storedPoints = 0): number {
   if (action === 'post_upload') return RMS_PER_POST;
-  if (action === 'post_like') return RMS_PER_LIKE;
+  if (action === 'post_received_like') return RMS_PER_RECEIVED_LIKE;
   return storedPoints;
 }
 
@@ -71,17 +71,6 @@ export async function awardUploadPoints(userId: string, postId: string): Promise
     );
   } catch (e) {
     console.warn('awardUploadPoints failed:', e);
-  }
-}
-
-export async function awardLikePoints(userId: string, postId: string): Promise<void> {
-  try {
-    await supabase.from('user_points').upsert(
-      { user_id: userId, action: 'post_like', reference_id: postId, points: RMS_PER_LIKE },
-      { onConflict: 'user_id,action,reference_id', ignoreDuplicates: true }
-    );
-  } catch (e) {
-    console.warn('awardLikePoints failed:', e);
   }
 }
 
@@ -116,8 +105,8 @@ export async function getLeaderboard(): Promise<{ entries: LeaderboardEntry[]; e
     ] = await Promise.all([
       db.from('profiles').select('id, display_name').limit(10000),
       db.from('user_points').select('user_id, action, points').limit(10000),
-      db.from('posts').select('user_id').limit(10000),
-      db.from('post_likes').select('user_id').limit(10000),
+      db.from('posts').select('id, user_id').limit(10000),
+      db.from('post_likes').select('post_id').limit(10000),
     ]);
 
     if (prErr) throw prErr;
@@ -139,8 +128,15 @@ export async function getLeaderboard(): Promise<{ entries: LeaderboardEntry[]; e
     (postsData || []).forEach(row => {
       directTotals[row.user_id] = (directTotals[row.user_id] || 0) + RMS_PER_POST;
     });
+    const postOwners: Record<string, string> = {};
+    (postsData || []).forEach(row => {
+      postOwners[row.id] = row.user_id;
+    });
     (likesData || []).forEach(row => {
-      directTotals[row.user_id] = (directTotals[row.user_id] || 0) + RMS_PER_LIKE;
+      const ownerId = postOwners[row.post_id];
+      if (ownerId) {
+        directTotals[ownerId] = (directTotals[ownerId] || 0) + RMS_PER_RECEIVED_LIKE;
+      }
     });
 
     // ── Merge: take whichever is higher ────────────────────────────────────

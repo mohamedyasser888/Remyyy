@@ -44,7 +44,7 @@ export function WardrobePage() {
     const { error } = await createPost({
       user_id: profile.id,
       name: data.name,
-      size: data.size as any,
+      size: data.size || null,
       category: data.category as any,
       description: data.description,
       image_path: data.imagePath!,
