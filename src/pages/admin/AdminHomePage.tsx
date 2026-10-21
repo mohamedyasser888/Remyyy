@@ -4,14 +4,12 @@ import { useEffect, useState } from 'react';
 import { supabase, supabaseAdmin } from '@/services/supabase';
 import { deletePost } from '@/services/posts';
 import { getImageUrl } from '@/services/storage';
-import { Card, Loader } from '@/components/common';
+import { Card, FilterChips, Loader } from '@/components/common';
 import { ALL_CATEGORIES } from '@/utils/constants';
 import type { PostWithLikes } from '@/types';
 import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 
 const db = supabaseAdmin ?? supabase;
-const INITIAL_CATEGORY_COUNT = 5;
-
 type AdminPost = PostWithLikes & { rating?: number | null; updated_at?: string | null };
 
 function formatDate(value: string | null | undefined) {
@@ -118,7 +116,6 @@ export function AdminHomePage() {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [showAllCategories, setShowAllCategories] = useState(false);
 
   useEffect(() => { setLoading(true); load(); }, []);
   useRealtimeSync(['posts', 'post_likes', 'profiles'], load, { admin: true });
@@ -150,7 +147,6 @@ export function AdminHomePage() {
   }
 
   const categoryOptions = ['All', ...ALL_CATEGORIES];
-  const visibleCategories = showAllCategories ? categoryOptions : categoryOptions.slice(0, INITIAL_CATEGORY_COUNT);
   const filteredPosts = selectedCategory === 'All' ? posts : posts.filter(post => post.category === selectedCategory);
 
   return (
@@ -159,9 +155,8 @@ export function AdminHomePage() {
         <h1 className="text-3xl font-bold tracking-tight text-slate-800">Home Feed</h1>
         <p className="mt-1 text-sm text-slate-500">{posts.length} posts — you can delete any</p>
       </div>
-      <div style={{ maxWidth: '340px' }} className="mx-auto mb-5 flex max-w-[340px] items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        {visibleCategories.map(category => <button key={category} type="button" onClick={() => setSelectedCategory(category)} aria-pressed={selectedCategory === category} className={`shrink-0 rounded-full border px-4 py-2 text-xs font-semibold transition-all duration-200 ${selectedCategory === category ? 'border-primary-500 bg-primary-500 text-white shadow-sm' : 'border-neutral-200 bg-white text-primary-700 hover:border-primary-200 hover:bg-primary-50'}`}>{category}</button>)}
-        {categoryOptions.length > INITIAL_CATEGORY_COUNT && <button type="button" onClick={() => setShowAllCategories(value => !value)} className="shrink-0 rounded-full px-3 py-2 text-xs font-semibold text-primary-700 transition-colors hover:bg-primary-50">{showAllCategories ? 'Show less' : 'Show more'}</button>}
+      <div style={{ maxWidth: '340px' }} className="mx-auto mb-5 max-w-[340px]">
+        <FilterChips options={categoryOptions} selected={selectedCategory} onChange={setSelectedCategory} />
       </div>
       {loading ? <div className="flex justify-center py-16"><Loader size="lg" /></div> : filteredPosts.length === 0 ? <p className="py-16 text-center text-sm text-slate-500">No posts in this category.</p> : <div style={{ maxWidth: '340px' }} className="mx-auto flex max-w-[340px] flex-col gap-5">{filteredPosts.map(post => <AdminPostCard key={post.id} post={post} email={emails[post.user_id]} deleting={deleting === post.id} onDelete={() => handleDelete(post)} />)}</div>}
     </div>

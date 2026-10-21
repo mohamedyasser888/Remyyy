@@ -1,6 +1,6 @@
 /**
  * Filter Chips Component
- * Horizontal scrollable category filter chips
+ * Category filter chips shown five at a time with arrow navigation.
  */
 
 import { useEffect, useState } from 'react';
@@ -12,6 +12,7 @@ interface FilterChipsProps<T extends string> {
   getLabel?: (value: T) => string;
   initialVisibleCount?: number;
   visibleStep?: number;
+  // Kept for backwards compatibility with existing callers.
   showMoreLabel?: string;
   showLessLabel?: string;
 }
@@ -23,21 +24,36 @@ export function FilterChips<T extends string>({
   getLabel = (value) => value,
   initialVisibleCount = 5,
   visibleStep = 5,
-  showMoreLabel = 'Show more',
-  showLessLabel = 'Show less',
 }: FilterChipsProps<T>) {
-  const [visibleCount, setVisibleCount] = useState(initialVisibleCount);
+  const pageSize = visibleStep || initialVisibleCount;
+  const [page, setPage] = useState(0);
   const optionsKey = options.join('\u0001');
 
   useEffect(() => {
-    setVisibleCount(initialVisibleCount);
-  }, [initialVisibleCount, optionsKey]);
+    setPage(0);
+  }, [optionsKey, pageSize]);
 
-  const hasMore = visibleCount < options.length;
-  const visibleOptions = options.slice(0, visibleCount);
+  useEffect(() => {
+    const selectedIndex = options.indexOf(selected);
+    if (selectedIndex >= 0) setPage(Math.floor(selectedIndex / pageSize));
+  }, [options, selected, pageSize]);
+
+  const pageCount = Math.max(1, Math.ceil(options.length / pageSize));
+  const visibleOptions = options.slice(page * pageSize, (page + 1) * pageSize);
 
   return (
-    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+    <div className="flex min-h-9 items-center gap-2 pb-1">
+      <button
+        type="button"
+        onClick={() => setPage(current => Math.max(0, current - 1))}
+        disabled={page === 0}
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-white text-primary-700 shadow-sm transition-colors hover:bg-primary-50 disabled:pointer-events-none disabled:opacity-30"
+        aria-label="Previous categories"
+      >
+        <span aria-hidden="true">‹</span>
+      </button>
+
+      <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto scrollbar-hide">
       {visibleOptions.map((option, index) => {
         const isSelected = selected === option;
         
@@ -59,17 +75,17 @@ export function FilterChips<T extends string>({
           </button>
         );
       })}
+      </div>
 
-      {options.length > initialVisibleCount && (
-        <button
-          type="button"
-          onClick={() => setVisibleCount(hasMore ? Math.min(visibleCount + visibleStep, options.length) : initialVisibleCount)}
-          className="shrink-0 rounded-full border border-primary-200 bg-primary-50/70 px-3.5 py-1.5 text-xs font-semibold text-primary-700 transition-colors hover:bg-primary-100"
-          aria-expanded={!hasMore}
-        >
-          {hasMore ? showMoreLabel : showLessLabel}
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={() => setPage(current => Math.min(pageCount - 1, current + 1))}
+        disabled={page >= pageCount - 1}
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-white text-primary-700 shadow-sm transition-colors hover:bg-primary-50 disabled:pointer-events-none disabled:opacity-30"
+        aria-label="Next categories"
+      >
+        <span aria-hidden="true">›</span>
+      </button>
     </div>
   );
 }
