@@ -33,8 +33,8 @@ export function TopBar({ title, action, showProfile = true, children }: TopBarPr
   return (
     <header className="lg:hidden sticky top-0 z-30 border-b border-white/80 bg-white/80 shadow-[0_8px_24px_rgba(86,55,100,0.08)] backdrop-blur-xl transition-all duration-300">
       <div className="flex items-center justify-between px-4 h-16">
-        <div className="flex items-center gap-3">
-          <BrandLogo className="w-24 h-9 lg:hidden" />
+        <div className="flex min-w-0 items-center gap-3">
+          <BrandLogo className="w-28 h-10 shrink-0 lg:hidden" />
           {showProfile && profile && (
             <div className="flex items-center gap-2.5">
               {/* Avatar */}
@@ -57,7 +57,7 @@ export function TopBar({ title, action, showProfile = true, children }: TopBarPr
               <RemyTierBadge tier={tier} size="md" />
             </div>
           )}
-          <h1 className="animate-slide-up text-xl font-bold text-neutral-900">{title}</h1>
+          <h1 className="animate-slide-up truncate text-xl font-bold text-neutral-900">{title}</h1>
         </div>
         <div className="flex items-center gap-2">
           <LanguageSwitcher />
