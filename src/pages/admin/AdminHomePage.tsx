@@ -155,7 +155,7 @@ export function AdminHomePage() {
         <h1 className="text-3xl font-bold tracking-tight text-slate-800">Home Feed</h1>
         <p className="mt-1 text-sm text-slate-500">{posts.length} posts — you can delete any</p>
       </div>
-      <div style={{ maxWidth: '340px' }} className="mx-auto mb-5 max-w-[340px]">
+      <div style={{ maxWidth: '500px' }} className="mx-auto mb-5 max-w-[500px]">
         <FilterChips options={categoryOptions} selected={selectedCategory} onChange={setSelectedCategory} />
       </div>
       {loading ? <div className="flex justify-center py-16"><Loader size="lg" /></div> : filteredPosts.length === 0 ? <p className="py-16 text-center text-sm text-slate-500">No posts in this category.</p> : <div style={{ maxWidth: '340px' }} className="mx-auto flex max-w-[340px] flex-col gap-5">{filteredPosts.map(post => <AdminPostCard key={post.id} post={post} email={emails[post.user_id]} deleting={deleting === post.id} onDelete={() => handleDelete(post)} />)}</div>}

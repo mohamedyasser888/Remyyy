@@ -62,7 +62,7 @@ export function FilterChips<T extends string>({
             key={option}
             onClick={() => onChange(option)}
             style={{ animationDelay: `${index * 45}ms` }}
-            className={`animate-slide-up min-w-0 rounded-full px-1.5 py-1.5 text-[11px] font-medium transition-all duration-200
+            className={`animate-slide-up min-w-0 rounded-full px-2 py-1.5 text-xs font-medium transition-all duration-200
               ${
                 isSelected
                   ? 'bg-primary-500 text-white shadow-md shadow-primary-500/20 ring-2 ring-primary-200 ring-offset-1'
@@ -71,7 +71,7 @@ export function FilterChips<T extends string>({
             `}
             aria-pressed={isSelected}
           >
-            <span className="block truncate">{getLabel(option)}</span>
+            <span className="block whitespace-nowrap text-center">{getLabel(option)}</span>
           </button>
         );
       })}
