@@ -88,7 +88,7 @@ export function AdminLayout() {
       <aside className="w-64 bg-slate-900 text-white flex flex-col">
         <div className="p-6 border-b border-slate-700">
           <div>
-            <img src="/remy-transparent.png" alt="Remy" className="w-36 h-auto object-contain object-left" />
+            <img src="/remy-transparent.png" alt="Remy" className="-ml-6 w-36 h-auto object-contain object-left" />
             <p className="text-xs text-slate-400 mt-1">Admin Panel</p>
           </div>
         </div>
