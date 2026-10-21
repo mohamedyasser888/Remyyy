@@ -53,7 +53,7 @@ export function FilterChips<T extends string>({
         <span aria-hidden="true">‹</span>
       </button>
 
-      <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto scrollbar-hide">
+      <div className="grid min-w-0 flex-1 grid-cols-5 items-center gap-1">
       {visibleOptions.map((option, index) => {
         const isSelected = selected === option;
         
@@ -62,7 +62,7 @@ export function FilterChips<T extends string>({
             key={option}
             onClick={() => onChange(option)}
             style={{ animationDelay: `${index * 45}ms` }}
-            className={`animate-slide-up shrink-0 min-w-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all duration-200
+            className={`animate-slide-up min-w-0 rounded-full px-1.5 py-1.5 text-[11px] font-medium transition-all duration-200
               ${
                 isSelected
                   ? 'bg-primary-500 text-white shadow-md shadow-primary-500/20 ring-2 ring-primary-200 ring-offset-1'
