@@ -40,11 +40,6 @@ export function AdminLogin() {
           {/* Logo */}
           <div className="text-center mb-8">
             <img
-              src="/rwm.jpeg"
-              alt="Remy mark"
-              className="mx-auto mb-4 h-20 w-20 rounded-2xl object-cover shadow-lg"
-            />
-            <img
               src="/remy-transparent.png"
               alt="Remy"
               className="mx-auto mb-4 w-64 max-w-full scale-110 object-contain"

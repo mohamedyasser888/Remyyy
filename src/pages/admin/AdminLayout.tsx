@@ -87,12 +87,9 @@ export function AdminLayout() {
       {/* Sidebar */}
       <aside className="w-64 bg-slate-900 text-white flex flex-col">
         <div className="p-6 border-b border-slate-700">
-          <div className="flex items-center gap-3">
-            <img src="/rwm.jpeg" alt="Remy mark" className="h-12 w-12 rounded-xl object-cover shadow-sm" />
-            <div>
-              <img src="/remy-transparent.png" alt="Remy" className="w-36 h-auto object-contain" />
-              <p className="text-xs text-slate-400 mt-1">Admin Panel</p>
-            </div>
+          <div>
+            <img src="/remy-transparent.png" alt="Remy" className="w-36 h-auto object-contain object-left" />
+            <p className="text-xs text-slate-400 mt-1">Admin Panel</p>
           </div>
         </div>
 
