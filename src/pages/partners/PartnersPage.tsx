@@ -10,6 +10,7 @@ import { getPartners, getPartnerPosts, type Partner, type PartnerPost } from '@/
 import { getImageUrl } from '@/services/storage';
 import { useT } from '@/i18n';
 import { useRealtimeSync } from '@/hooks/useRealtimeSync';
+import { getCategoryLabel } from '@/utils/categoryLabels';
 
 export function PartnersPage() {
   const t = useT();
@@ -114,6 +115,7 @@ export function PartnersPage() {
                 options={categories}
                 selected={categoryFilter}
                 onChange={setCategoryFilter}
+                getLabel={(category) => getCategoryLabel(t, category)}
                 showMoreLabel={t('common.showMore')}
                 showLessLabel={t('common.showLess')}
               />

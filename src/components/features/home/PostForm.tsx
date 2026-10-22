@@ -15,6 +15,7 @@ import { getErrorMessage } from '@/utils/errorHandling';
 import { getPartners } from '@/services/partners';
 import type { Partner } from '@/services/partners';
 import type { WardrobeItem, Size, Category } from '@/types';
+import { getCategoryLabel } from '@/utils/categoryLabels';
 
 interface PostFormProps {
   isOpen: boolean;
@@ -262,7 +263,7 @@ export function PostForm({ isOpen, onClose, onSubmit, prefillItem }: PostFormPro
           <option value="">{t('wardrobe.selectCategory')}</option>
           {ALL_CATEGORIES.map(category => (
             <option key={category} value={category}>
-              {t(`categories.${category.toLowerCase().replace(/\s+/g, '')}`)}
+              {getCategoryLabel(t, category)}
             </option>
           ))}
         </Select>

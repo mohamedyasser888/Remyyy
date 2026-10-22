@@ -12,6 +12,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { getTrendItems, toggleTrendLike, type TrendItem } from '@/services/admin';
 import { getImageUrl } from '@/services/storage';
 import { useRealtimeSync } from '@/hooks/useRealtimeSync';
+import { getCategoryLabel } from '@/utils/categoryLabels';
 
 export function TrendsPage() {
   const t = useT();
@@ -112,7 +113,12 @@ export function TrendsPage() {
             <>
               {categories.length > 1 && (
                 <div className="mb-6">
-                  <FilterChips options={categories} selected={selectedCategory} onChange={setSelectedCategory} />
+                  <FilterChips
+                    options={categories}
+                    selected={selectedCategory}
+                    onChange={setSelectedCategory}
+                    getLabel={(category) => getCategoryLabel(t, category)}
+                  />
                 </div>
               )}
               <div className="vertical-snap-feed">

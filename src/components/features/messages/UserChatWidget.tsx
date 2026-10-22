@@ -146,8 +146,7 @@ export function UserChatWidget() {
       {/* ── Chat panel ───────────────────────────────────────────── */}
       {open && (
         <div
-          className="message-panel animate-scale-in fixed bottom-20 right-4 z-50 flex w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-3xl border border-white/80 sm:w-96"
-          style={{ height: '520px' }}
+          className="message-panel mobile-chat-panel mobile-floating-action animate-scale-in fixed right-4 z-50 flex w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-3xl border border-white/80 sm:w-96"
         >
           {/* Header */}
           <div className="flex items-center justify-between bg-primary-500 px-4 py-4">
@@ -271,7 +270,7 @@ export function UserChatWidget() {
       {/* ── Floating bubble ──────────────────────────────────────── */}
       <button
         onClick={() => setOpen(o => !o)}
-        className="button-polish fixed bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-500 shadow-[0_12px_28px_rgba(104,13,35,0.35)] transition-transform hover:scale-110 active:scale-95 lg:bottom-4"
+        className="button-polish mobile-floating-action fixed right-4 z-50 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-500 shadow-[0_12px_28px_rgba(104,13,35,0.35)] transition-transform hover:scale-110 active:scale-95"
       >
         {/* Unread dot */}
         {!open && hasUnread && (

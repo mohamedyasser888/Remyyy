@@ -14,6 +14,7 @@ import { FilterChips, EmptyState, EmptyStateIcons, SkeletonGrid, Button } from '
 import { getCategoriesForGender } from '@/utils/constants';
 import { getErrorMessage } from '@/utils/errorHandling';
 import type { WardrobeItem, Category } from '@/types';
+import { getCategoryLabel } from '@/utils/categoryLabels';
 
 interface OwnedTabProps {
   onShareToHome?: (item: WardrobeItem) => void;
@@ -143,7 +144,7 @@ export function OwnedTab({ onShareToHome }: OwnedTabProps) {
           options={filterOptions}
           selected={selectedCategory}
           onChange={setSelectedCategory}
-          getLabel={(category) => t(`categories.${category.toLowerCase().replace(/\s+/g, '')}`)}
+          getLabel={(category) => getCategoryLabel(t, category)}
           showMoreLabel={t('common.showMore')}
           showLessLabel={t('common.showLess')}
         />

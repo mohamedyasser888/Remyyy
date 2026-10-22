@@ -16,6 +16,7 @@ import { getErrorMessage } from '@/utils/errorHandling';
 import { ALL_CATEGORIES } from '@/utils/constants';
 import { createPartnerPostFromExistingImage } from '@/services/partners';
 import type { Category, PostWithLikes } from '@/types';
+import { getCategoryLabel } from '@/utils/categoryLabels';
 
 export function HomePage() {
   const t = useT();
@@ -125,19 +126,32 @@ export function HomePage() {
       <div className="flex-1 relative z-10">
         {/* Category Filter */}
         <div className="sticky top-16 lg:top-0 z-20 bg-white border-b border-neutral-200 py-3">
-          <div className="max-w-7xl mx-auto px-4">
-            <FilterChips
-              options={['All', ...ALL_CATEGORIES] as const}
-              selected={selectedCategory}
-              onChange={handleCategoryChange}
-              getLabel={(category) => 
-                category === 'All' 
-                  ? t('common.all') 
-                  : t(`categories.${category.toLowerCase().replace(/\s+/g, '')}`)
-              }
-              showMoreLabel={t('common.showMore')}
-              showLessLabel={t('common.showLess')}
-            />
+          <div className="max-w-7xl mx-auto px-4 lg:flex lg:items-center">
+            <div className="min-w-0 flex-1">
+              <FilterChips
+                options={['All', ...ALL_CATEGORIES] as const}
+                selected={selectedCategory}
+                onChange={handleCategoryChange}
+                getLabel={(category) =>
+                  category === 'All'
+                    ? t('common.all')
+                    : getCategoryLabel(t, category)
+                }
+                showMoreLabel={t('common.showMore')}
+                showLessLabel={t('common.showLess')}
+              />
+            </div>
+            <div className="mt-2 flex justify-end lg:mt-0 lg:ml-3 lg:shrink-0">
+              <button
+                onClick={() => setShowPostForm(true)}
+                className="flex min-h-10 items-center justify-center gap-1.5 rounded-full bg-primary-500 px-3.5 py-2 text-white shadow-lg transition-all duration-200 hover:scale-105 hover:bg-primary-600 active:scale-95 active:bg-primary-700 focus:outline-none focus:ring-4 focus:ring-primary-300 lg:px-4 lg:py-2.5"
+              >
+                <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                </svg>
+                <span className="whitespace-nowrap text-xs font-semibold sm:text-sm">{t('home.createPost')}</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -182,22 +196,6 @@ export function HomePage() {
       </div>
 
       {/* Add Cloth Button — top right, leaves bottom right for chat */}
-      <button
-        onClick={() => setShowPostForm(true)}
-        className="fixed top-4 right-4 lg:top-6 lg:right-6 z-40
-          flex items-center gap-2 px-4 py-2.5
-          bg-primary-500 text-white rounded-full shadow-lg
-          hover:bg-primary-600 active:bg-primary-700
-          hover:scale-105 active:scale-95
-          transition-all duration-200
-          focus:outline-none focus:ring-4 focus:ring-primary-300"
-      >
-        <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-        </svg>
-        <span className="font-semibold text-sm whitespace-nowrap">{t('home.createPost')}</span>
-      </button>
-
       {/* Create Post Modal */}
       <PostForm
         isOpen={showPostForm}

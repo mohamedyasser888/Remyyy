@@ -13,6 +13,7 @@ import { validateItemForm } from '@/utils/validation';
 import { getCategoriesForGender, categoryRequiresSize } from '@/utils/constants';
 import { getErrorMessage } from '@/utils/errorHandling';
 import type { WardrobeItem, Size, Category } from '@/types';
+import { getCategoryLabel } from '@/utils/categoryLabels';
 
 interface ItemFormProps {
   isOpen: boolean;
@@ -205,7 +206,7 @@ export function ItemForm({ isOpen, onClose, onSubmit, editItem }: ItemFormProps)
           <option value="">{t('wardrobe.selectCategory')}</option>
           {categories.map(category => (
             <option key={category} value={category}>
-              {t(`categories.${category.toLowerCase().replace(/\s+/g, '')}`)}
+              {getCategoryLabel(t, category)}
             </option>
           ))}
         </Select>

@@ -9,6 +9,41 @@
   
   body {
     @apply bg-neutral-50 text-neutral-900 font-sans antialiased;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    overflow-x: hidden;
+  }
+
+  #root {
+    min-height: 100%;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Prevent iOS Safari from zooming controls and keep media inside narrow cards. */
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  img,
+  svg,
+  video,
+  canvas {
+    max-width: 100%;
+  }
+
+  img,
+  video {
+    height: auto;
   }
 
   html {
@@ -59,13 +94,14 @@
 
   /* Instagram-style one-card-at-a-time vertical feeds. */
   .vertical-snap-feed {
-    height: calc(100dvh - 13rem);
+    height: calc(100vh - 13rem);
     min-height: 30rem;
     overflow-y: auto;
     scroll-snap-type: y mandatory;
     overscroll-behavior-y: contain;
     scroll-behavior: smooth;
     scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
   }
 
   .vertical-snap-feed::-webkit-scrollbar {
@@ -115,7 +151,7 @@
   }
 
   .feed-card-image {
-    height: clamp(15rem, 42dvh, 34rem);
+    height: clamp(15rem, 42vh, 34rem);
     aspect-ratio: auto;
   }
 
@@ -141,19 +177,97 @@
     }
 
     .feed-card-image {
-      height: clamp(13rem, 37dvh, 26rem);
+      height: clamp(13rem, 37vh, 26rem);
     }
   }
 
   @media (min-width: 1024px) {
     .vertical-snap-feed {
-      height: calc(100dvh - 10rem);
+      height: calc(100vh - 10rem);
+    }
+  }
+
+  /* Dynamic viewport units avoid the mobile browser toolbar, when available. */
+  @supports (height: 100dvh) {
+    .app-shell {
+      min-height: 100dvh;
+    }
+
+    .vertical-snap-feed {
+      height: calc(100dvh - 13rem);
+    }
+
+    .feed-card-image {
+      height: clamp(15rem, 42dvh, 34rem);
+    }
+
+    @media (max-height: 760px) {
+      .feed-card-image {
+        height: clamp(13rem, 37dvh, 26rem);
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .vertical-snap-feed {
+        height: calc(100dvh - 10rem);
+      }
     }
   }
 
   /* Safe area for iOS notch */
   .safe-area-bottom {
+    padding-bottom: 0;
     padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Keep the support widget above the fixed mobile tab bar and iOS home area. */
+  .mobile-floating-action {
+    bottom: 5rem;
+  }
+
+  .mobile-chat-panel {
+    height: 520px;
+    max-height: calc(100vh - 6rem);
+  }
+
+  @media (min-width: 1024px) {
+    .mobile-floating-action {
+      bottom: 1rem;
+    }
+
+    .mobile-chat-panel {
+      max-height: calc(100vh - 2rem);
+    }
+  }
+
+  .app-main {
+    min-height: 100vh;
+  }
+
+  @media (max-width: 1023px) {
+    .app-main {
+      padding-bottom: 4rem;
+    }
+  }
+
+  @supports (padding: max(0px)) {
+    .safe-area-bottom {
+      padding-bottom: max(0px, env(safe-area-inset-bottom));
+    }
+
+    @media (max-width: 1023px) {
+      .mobile-floating-action {
+        bottom: max(5rem, calc(5rem + env(safe-area-inset-bottom)));
+      }
+
+      .mobile-chat-panel {
+        max-height: calc(100dvh - 6rem - env(safe-area-inset-bottom));
+      }
+
+      .app-main {
+        padding-bottom: max(4rem, calc(4rem + env(safe-area-inset-bottom)));
+      }
+    }
   }
 
   /* Gradient overlays for image cards */
@@ -168,6 +282,8 @@
   /* Glass morphism effect */
   .glass {
     @apply bg-white/80 backdrop-blur-md;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
   }
 
   /* Truncate text utilities */
@@ -520,6 +636,7 @@
   .message-panel {
     background: rgba(255,255,255,.92);
     box-shadow: 0 24px 70px rgba(104, 13, 35, .2);
+    -webkit-backdrop-filter: blur(20px);
     backdrop-filter: blur(20px);
   }
 
@@ -530,6 +647,7 @@
   .message-composer {
     background: rgba(255,255,255,.86);
     box-shadow: 0 -12px 28px rgba(104,13,35,.1);
+    -webkit-backdrop-filter: blur(18px);
     backdrop-filter: blur(18px);
   }
 
